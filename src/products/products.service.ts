@@ -9,7 +9,7 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private productModel: Model<ProductDocument>,
-  ) {}
+  ) { }
 
   async create(data: CreateProductDto) {
     const product = new this.productModel(data);
@@ -21,6 +21,17 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    return this.productModel.findById(id).exec();
+    return this.productModel.findOne({ id: +id }).exec();
+  }
+
+  async update(id: string, updateData: any) {
+    // TODO: Replace 'any' with a proper DTO or type for updateData
+    return this.productModel.findOneAndUpdate({ id: +id }, updateData, { new: true });
+  }
+
+  async remove(id: string) {
+    return this.productModel.findOneAndDelete({ id: +id });
   }
 }
+
+
