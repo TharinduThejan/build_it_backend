@@ -11,9 +11,10 @@ export class ProductsService {
     private productModel: Model<ProductDocument>,
   ) {}
 
-  async create(data: CreateProductDto) {
-    const product = new this.productModel(data);
-    return product.save();
+  async create(product: CreateProductDto) {
+    this.productModel.push({ ...product,id:this.product.length+1 });
+    const newProduct = new this.productModel(product);
+    return newProduct.save();
   }
 
   async findAll() {
@@ -21,16 +22,15 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    return this.productModel.findOne({ id: Number(id) }).exec();
+    return this.productModel.findOne({ productid: Number(id) }).exec();
   }
 
   async update(id: string, updateData: any) {
-    // TODO: Replace 'any' with a proper DTO or type for updateData
-    return this.productModel.findOneAndUpdate({ id: Number(id) }, updateData);
+    return this.productModel.findOneAndUpdate({ productid: Number(id) }, updateData,{ new: true }).exec();
   }
 
   async remove(id: string) {
-    return this.productModel.findOneAndDelete({ id: Number(id) });
+    return this.productModel.findOneAndDelete({ productid: Number(id) });
   }
 }
 
