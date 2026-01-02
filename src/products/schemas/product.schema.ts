@@ -5,7 +5,7 @@ export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true })
 export class Product {
-@Prop({ required: true })
+  @Prop()
   productId: number;
 
   @Prop({ required: true })
@@ -20,7 +20,7 @@ export class Product {
   @Prop()
   image: string;
 
-   @Prop()
+  @Prop()
   description: string;
 }
 

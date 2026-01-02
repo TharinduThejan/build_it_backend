@@ -12,8 +12,19 @@ export class ProductsService {
   ) {}
 
   async create(product: CreateProductDto) {
-    this.productModel.push({ ...product,id:this.product.length+1 });
-    const newProduct = new this.productModel(product);
+    // Find the highest productId in the collection
+    const lastProduct = await this.productModel.findOne(
+      {},
+      {},
+      { sort: { productId: -1 } },
+    );
+    const nextProductId = lastProduct?.productId
+      ? lastProduct.productId + 1
+      : 1;
+    const newProduct = new this.productModel({
+      ...product,
+      productId: nextProductId,
+    });
     return newProduct.save();
   }
 
@@ -22,15 +33,16 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    return this.productModel.findOne({ productid: Number(id) }).exec();
+    return this.productModel.findOne({ productId: Number(id) }).exec();
   }
 
-  async update(id: string, updateData: any) {
-    return this.productModel.findOneAndUpdate({ productid: Number(id) }, updateData,{ new: true }).exec();
+  async update(id: string, updateData: Partial<Product>) {
+    return this.productModel
+      .findOneAndUpdate({ productId: Number(id) }, updateData, { new: true })
+      .exec();
   }
 
   async remove(id: string) {
-    return this.productModel.findOneAndDelete({ productid: Number(id) });
+    return this.productModel.findOneAndDelete({ productId: Number(id) });
   }
 }
-

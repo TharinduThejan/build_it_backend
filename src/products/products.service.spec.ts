@@ -1,18 +1,47 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ProductsService } from './products.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateProductDto } from './dto/create-product.dto';
+import e from 'express';
 
-describe('ProductsService', () => {
-  let service: ProductsService;
+@Injectable()
+export class ProductsService {
+  private products: CreateProductDto[] = [];
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [ProductsService],
-    }).compile();
+  getAllProducts(): CreateProductDto[] {
+    return this.products;
+  }
 
-    service = module.get<ProductsService>(ProductsService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-});
+  getById(id: number) {
+    let product: null | CreateProductDto = null;
+    for (const productElement of this.products) {
+      if (productElement.productId === id) {
+        product = productElement;
+        break;
+      }
+    }
+    if (product) return product;
+    else throw new NotFoundException('Product not found');
+  }
+  createProduct(product: CreateProductDto) {
+    this.products.push({ ...product, productId: this.products.length + 1 });
+    return this.products.length;
+  }
+  updateProduct(id: number, updateProduct: Partial<CreateProductDto>) {
+    const productIndex = this.products.findIndex(product => product.productId === id);
+    if (productIndex >= 0) {
+      this.products.splice(productIndex, 1, { ...this.products[productIndex], ...updateProduct});
+      return `product with id ${id} has been updated`;
+    }
+    else {
+      throw new NotFoundException('Product not found');
+    }
+  }
+  deleteProduct(id: number) {
+    const productIndex = this.products.findIndex(product => product.productId === id);
+    if (productIndex >= 0) {
+      this.products.splice(productIndex, 1);
+      return `product with id ${id} has been deleted`;
+    }
+    else {
+      throw new NotFoundException('Product not found');
+    }
+}
