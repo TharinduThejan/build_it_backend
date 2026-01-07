@@ -4,20 +4,25 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
 	constructor(
 		@InjectModel(User.name)
 		private userModel: Model<UserDocument>,
-	) {}
-
+	) { }
 	async create(user: CreateUserDto) {
-		// Find the highest userId in the collection
-		const lastUser = await this.userModel.findOne({}, {}, { sort: { userId: -1 } });
+		const lastUser = await this.userModel.findOne(
+			{},
+			{},
+			{ sort: { userId: -1 } },
+		);
 		const nextUserId = lastUser?.userId ? lastUser.userId + 1 : 1;
+		const hashedPassword = await bcrypt.hash(user.password, 10);
 		const newUser = new this.userModel({
 			...user,
+			password: hashedPassword,
 			userId: nextUserId,
 		});
 		return newUser.save();
