@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
@@ -12,20 +12,27 @@ export class ProductsService {
   ) {}
 
   async create(product: CreateProductDto) {
-    // Find the highest productId in the collection
-    const lastProduct = await this.productModel.findOne(
-      {},
-      {},
-      { sort: { productId: -1 } },
-    );
-    const nextProductId = lastProduct?.productId
-      ? lastProduct.productId + 1
-      : 1;
-    const newProduct = new this.productModel({
-      ...product,
-      productId: nextProductId,
-    });
-    return newProduct.save();
+    try {
+      // Find the highest productId in the collection
+      const lastProduct = await this.productModel.findOne(
+        {},
+        {},
+        { sort: { productId: -1 } },
+      );
+      const lastId = Number(lastProduct?.productId);
+      const nextProductId =
+        Number.isFinite(lastId) && lastId > 0 ? lastId + 1 : 1;
+      const newProduct = new this.productModel({
+        ...product,
+        qty: product.qty ?? 0,
+        productId: nextProductId,
+      });
+      return newProduct.save();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to create product';
+      throw new BadRequestException(message);
+    }
   }
 
   async findAll() {

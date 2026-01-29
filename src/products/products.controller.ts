@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -30,8 +31,15 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async createProduct(@Body() newproductdata: any) {
-    const newProduct = await this.productsService.create(newproductdata);
-    return newProduct;
+    try {
+      const newProduct = await this.productsService.create(newproductdata);
+      return newProduct;
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to create product';
+      console.error('Create product error:', error);
+      throw new BadRequestException(message);
+    }
   }
 
   @Put('/:id')
