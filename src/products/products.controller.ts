@@ -1,41 +1,58 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
   Param,
+  Post,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/create-product.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) { }
-
-  @Post()
-  async create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
-  }
+  constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  async findAll() {
-    return this.productsService.findAll();
+  async allProducts() {
+    return await this.productsService.findAll();
+  }
+  @Get('/:id')
+  async getProductById(@Param('id') productId: string) {
+    return await this.productsService.findOne(productId);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async createProduct(@Body() newproductdata: any) {
+    try {
+      const newProduct = await this.productsService.create(newproductdata);
+      return newProduct;
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to create product';
+      console.error('Create product error:', error);
+      throw new BadRequestException(message);
+    }
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() body: any) {
-    return this.productsService.update(id, body);
+  @Put('/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async updateProduct(@Param('id') productId: string, @Body() updateData: any) {
+    return await this.productsService.update(productId, updateData);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(id);
+  @Delete('/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async deleteProduct(@Param('id') productId: string) {
+    return await this.productsService.remove(productId);
   }
 }

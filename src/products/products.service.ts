@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
@@ -12,9 +12,27 @@ export class ProductsService {
   ) {}
 
   async create(product: CreateProductDto) {
-    this.productModel.push({ ...product,id:this.product.length+1 });
-    const newProduct = new this.productModel(product);
-    return newProduct.save();
+    try {
+      // Find the highest productId in the collection
+      const lastProduct = await this.productModel.findOne(
+        {},
+        {},
+        { sort: { productId: -1 } },
+      );
+      const lastId = Number(lastProduct?.productId);
+      const nextProductId =
+        Number.isFinite(lastId) && lastId > 0 ? lastId + 1 : 1;
+      const newProduct = new this.productModel({
+        ...product,
+        qty: product.qty ?? 0,
+        productId: nextProductId,
+      });
+      return newProduct.save();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to create product';
+      throw new BadRequestException(message);
+    }
   }
 
   async findAll() {
@@ -22,15 +40,16 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    return this.productModel.findOne({ productid: Number(id) }).exec();
+    return this.productModel.findOne({ productId: Number(id) }).exec();
   }
 
-  async update(id: string, updateData: any) {
-    return this.productModel.findOneAndUpdate({ productid: Number(id) }, updateData,{ new: true }).exec();
+  async update(id: string, updateData: Partial<Product>) {
+    return this.productModel
+      .findOneAndUpdate({ productId: Number(id) }, updateData, { new: true })
+      .exec();
   }
 
   async remove(id: string) {
-    return this.productModel.findOneAndDelete({ productid: Number(id) });
+    return this.productModel.findOneAndDelete({ productId: Number(id) });
   }
 }
-

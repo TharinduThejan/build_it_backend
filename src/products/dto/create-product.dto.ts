@@ -1,7 +1,8 @@
 export class CreateProductDto {
-  productId: number;
-  name: string;
-  price: number;
-  category: string;
-  image: string;
+  productId?: number;
+  name!: string;
+  price!: number;
+  qty!: number;
+  category!: string;
+  image!: string;
 }
